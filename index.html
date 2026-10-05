@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>SafeStade2 — SOC · Cyberdéfense · GRC</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#C1272D; --red-deep:#7C1A1F; --red-ink:#4A1013;
+    --red-t08:rgba(193,39,45,0.08); --red-t14:rgba(193,39,45,0.14); --red-t22:rgba(193,39,45,0.24);
+    --green:#006233; --green-deep:#013D20; --green-ink:#012814;
+    --green-t08:rgba(0,98,51,0.10); --green-t14:rgba(0,98,51,0.16); --green-t22:rgba(0,98,51,0.26);
+    --white:#FFFFFF; --ink:#EAF3EE; --ink-soft:rgba(234,243,238,0.62); --bg:#0E1B15; --line:rgba(234,243,238,0.14);
+    --card:#0F3A22; --card-strong:#164A2B; --nav-bg:#4A1013;
+    --red-light:#FF6B72; --green-light:#4CD68A;
+    --display:'Chakra Petch',sans-serif; --body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#0A130E;font-family:var(--body);color:var(--ink);display:flex;justify-content:center;padding:26px 12px;}
+  .device{width:100%;max-width:404px;background:linear-gradient(180deg,#0C2417 0%,#0A2015 60%,#091C13 100%);border-radius:32px;overflow:hidden;box-shadow:0 28px 55px rgba(0,0,0,.5);border:1px solid rgba(0,0,0,.4);}
+  .device-frame{position:relative;}
+  button{font-family:var(--body);cursor:pointer;border:none;background:none;}
+
+  .header{position:relative;background:var(--nav-bg);padding:18px 20px 22px;color:var(--white);overflow:hidden;}
+  .zellige{position:absolute;inset:0;opacity:0.14;pointer-events:none;}
+  .header-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2;}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand-mark{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.3);border-radius:10px;}
+  .brand-text .eyebrow{font-family:var(--display);font-size:9.5px;letter-spacing:.13em;color:rgba(255,255,255,.72);}
+  .brand-text .title{font-family:var(--display);font-size:15px;font-weight:700;}
+  .org-badge{font-size:10px;font-weight:600;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);padding:5px 10px;border-radius:999px;}
+  .head-actions{display:flex;align-items:center;gap:8px;}
+  .role-btn{color:var(--white);cursor:pointer;}
+  .bell-btn{position:relative;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:var(--white);font-size:14px;display:flex;align-items:center;justify-content:center;}
+  .bell-dot{position:absolute;top:4px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--green-light);border:1px solid var(--red-ink);}
+  .notif-panel{display:none;position:absolute;top:64px;right:18px;width:250px;background:var(--card-strong);border:1px solid var(--line);border-radius:14px;padding:10px;z-index:30;box-shadow:0 14px 30px rgba(0,0,0,.4);}
+  .notif-panel.open{display:block;}
+  .notif-item{font-size:11px;padding:8px 6px;border-bottom:1px solid var(--line);color:var(--ink);}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item b{display:block;font-size:11.5px;margin-bottom:2px;}
+  .header-screen-title{position:relative;z-index:2;margin-top:16px;font-family:var(--display);font-size:18px;font-weight:600;}
+  .header-screen-sub{position:relative;z-index:2;margin-top:4px;font-size:11.5px;color:rgba(255,255,255,.78);max-width:290px;line-height:1.5;}
+
+  .tabbar{display:flex;gap:6px;margin-top:16px;position:relative;z-index:2;overflow-x:auto;}
+  .tab{flex-shrink:0;font-size:11px;font-weight:600;color:rgba(255,255,255,.75);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);padding:8px 13px;border-radius:10px;}
+  .tab.active{background:var(--card-strong);color:var(--white);}
+
+  .content{padding:0 18px 92px;margin-top:-10px;position:relative;z-index:3;min-height:420px;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:fadein .2s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  .section-title{display:flex;align-items:baseline;justify-content:space-between;margin:20px 0 11px;}
+  .section-title:first-child{margin-top:16px;}
+  .section-title h2{font-family:var(--display);font-size:14px;font-weight:600;}
+  .section-title .tag{font-size:10.5px;color:var(--ink-soft);}
+
+  .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .kpi{border-radius:16px;padding:14px;border:1px solid var(--line);position:relative;overflow:hidden;border-left:3px solid transparent;}
+  .kpi.safe{background:linear-gradient(155deg,var(--green-t22),var(--card) 65%);border-left-color:var(--green);}
+  .kpi.alert{background:linear-gradient(155deg,var(--red-t22),var(--card) 65%);border-left-color:var(--red);}
+  .kpi .kpi-num{font-family:var(--display);font-size:23px;font-weight:700;}
+  .kpi.safe .kpi-num{color:var(--green);}
+  .kpi.alert .kpi-num{color:var(--red);}
+  .kpi .kpi-label{font-size:10.5px;color:var(--ink-soft);margin-top:2px;font-weight:500;}
+  .kpi .kpi-delta{font-size:9.5px;font-weight:700;margin-top:6px;display:inline-block;padding:2px 7px;border-radius:999px;}
+  .kpi.safe .kpi-delta{background:var(--green-t22);color:var(--green-light);}
+  .kpi.alert .kpi-delta{background:var(--red-t22);color:var(--red-light);}
+
+  .row-card{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin-bottom:9px;width:100%;text-align:left;}
+  .row-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .row-icon.crit{background:var(--red-t14);} .row-icon.watch{background:var(--red-t08);} .row-icon.ok{background:var(--green-t08);}
+  .row-text{flex:1;min-width:0;} .row-title{font-size:12.5px;font-weight:600;} .row-meta{font-size:10.5px;color:var(--ink-soft);margin-top:2px;}
+  .row-tag{font-size:9.5px;font-weight:700;letter-spacing:.03em;padding:4px 9px;border-radius:999px;flex-shrink:0;margin-left:6px;}
+  .row-tag.crit{background:var(--red);color:var(--white);} .row-tag.watch{background:var(--red-t22);color:var(--red-light);} .row-tag.ok{background:var(--green-t22);color:var(--green-light);}
+
+  .outil-panel{display:none;} .outil-panel.active{display:block;animation:fadein .2s ease;}
+  .outil-nav{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
+  .outil-nav button{flex-shrink:0;font-size:10.5px;font-weight:700;padding:8px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);}
+  .outil-nav button.active{background:var(--green);border-color:var(--green);color:var(--white);}
+  .tool-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:14px;}
+  .tool-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+  .tool-title{font-family:var(--display);font-size:13.5px;font-weight:600;}
+  .sim-badge{font-size:9.5px;font-weight:700;background:var(--red-t22);color:var(--red-light);padding:4px 9px;border-radius:999px;}
+  .sim-badge.on{background:var(--green-t22);color:var(--green-light);}
+  .sim-badge.pending{background:rgba(234,243,238,.14);color:var(--ink-soft);}
+  .tool-sub{font-size:11px;color:var(--ink-soft);margin-top:4px;margin-bottom:12px;line-height:1.5;}
+  .tool-label{font-size:10.5px;font-weight:600;color:var(--ink-soft);display:block;margin:10px 0 5px;}
+  .tool-input{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;font-size:12.5px;background:var(--card-strong);color:var(--ink);font-family:inherit;}
+  textarea.tool-input{resize:none;height:60px;}
+  .tool-btn{width:100%;padding:11px;border-radius:10px;font-weight:700;font-size:12.5px;margin-top:8px;}
+  .tool-btn.primary{background:var(--red);color:var(--white);}
+  .tool-btn.green{background:var(--green);color:var(--white);}
+  .tool-btn.ghost{background:var(--card-strong);border:1px solid var(--line);color:var(--ink);}
+  .btn-pair{display:flex;gap:8px;margin-top:8px;} .btn-pair .tool-btn{flex:1;margin-top:0;}
+  .tool-note{font-size:10.5px;color:var(--ink-soft);margin-top:12px;line-height:1.5;}
+  .status-line{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;margin-top:10px;padding:9px 12px;background:var(--bg);border-radius:10px;border:1px solid var(--line);}
+  .state-pill{font-size:9.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--red-t22);color:var(--red-light);}
+  .state-pill.on{background:var(--green-t22);color:var(--green-light);}
+  .state-pill.pending{background:rgba(234,243,238,.14);color:var(--ink-soft);}
+  .chip-select{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+  .mini-chip{font-size:10.5px;font-weight:600;padding:6px 11px;border-radius:999px;background:var(--card-strong);border:1px solid var(--line);color:var(--ink-soft);}
+  .mini-chip.active{background:var(--red);border-color:var(--red);color:var(--white);}
+  .led-dot{width:20px;height:20px;border-radius:50%;background:#333;border:2px solid var(--line);transition:.2s;display:inline-block;}
+  .led-dot.red{background:var(--red);box-shadow:0 0 14px 3px var(--red);border-color:var(--red);}
+  .led-dot.green{background:var(--green-light);box-shadow:0 0 14px 3px var(--green-light);border-color:var(--green-light);}
+
+  .cam-box{position:relative;width:100%;aspect-ratio:4/3;background:#000;border-radius:14px;overflow:hidden;margin-top:10px;border:2px dashed var(--line);}
+  .cam-box video, .cam-box canvas, .cam-box img{width:100%;height:100%;object-fit:cover;display:block;}
+  .cam-box canvas{display:none;}
+  .cam-face-box{position:absolute;border:2px solid var(--green-light);border-radius:6px;display:none;pointer-events:none;}
+  .fp-icon{font-size:38px;text-align:center;transition:.3s;}
+  .fp-icon.scanning{animation:fpPulse .6s infinite;}
+  @keyframes fpPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.12);}}
+  .fingerprint-zone{margin-top:10px;background:var(--bg);border:2px dashed var(--line);border-radius:14px;padding:22px;text-align:center;cursor:pointer;transition:.2s;}
+  .fingerprint-zone:hover{border-color:var(--green);}
+  .fp-label{font-size:11.5px;color:var(--ink-soft);margin-top:8px;font-weight:600;}
+  .scan-result{margin-top:14px;border-radius:14px;padding:14px;text-align:center;display:none;}
+  .scan-result.valid{background:var(--green-t22);border:1px solid var(--green-t22);display:block;}
+  .scan-result.invalid{background:var(--red-t22);border:1px solid var(--red-t22);display:block;}
+  .scan-result .sr-label{font-family:var(--display);font-size:15px;font-weight:700;}
+  .scan-result.valid .sr-label{color:var(--green-light);}
+  .scan-result.invalid .sr-label{color:var(--red-light);}
+  .scan-result .sr-meta{font-size:11px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
+  .press-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:6px;margin-bottom:4px;}
+  .press-btn{background:var(--red-t14);border:1px solid var(--red-t22);border-radius:12px;padding:12px 8px;text-align:center;font-size:11.5px;font-weight:700;color:var(--red-light);}
+  .honest-note{font-size:10px;color:var(--ink-soft);background:rgba(234,243,238,.06);border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-top:10px;line-height:1.5;}
+  .honest-note b{color:var(--ink);}
+
+  /* SECURITE : toggles réels persistés */
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin-bottom:9px;}
+  .toggle-row .tr-text{flex:1;min-width:0;}
+  .toggle-row .tr-title{font-size:12.5px;font-weight:600;}
+  .toggle-row .tr-meta{font-size:10.5px;color:var(--ink-soft);margin-top:2px;}
+  .toggle-switch{width:42px;height:24px;border-radius:999px;background:var(--red-t22);border:1px solid var(--red-t22);position:relative;flex-shrink:0;transition:.2s;}
+  .toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--white);transition:.2s;}
+  .toggle-switch.on{background:var(--green);border-color:var(--green);}
+  .toggle-switch.on::after{left:20px;}
+
+  /* SOC : journal d'audit réel */
+  .audit-item{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;}
+  .audit-item .ai-dot{width:8px;height:8px;border-radius:50%;background:var(--green-light);margin-top:5px;flex-shrink:0;}
+  .audit-item.warn .ai-dot{background:var(--red-light);}
+  .audit-item .ai-text{flex:1;min-width:0;}
+  .audit-item .ai-action{font-size:12px;font-weight:600;}
+  .audit-item .ai-time{font-size:10px;color:var(--ink-soft);margin-top:2px;}
+  .empty-note{font-size:11px;color:var(--ink-soft);text-align:center;padding:20px 10px;}
+
+  /* TICKETS */
+  .cat-row{display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;}
+  .cat-chip{flex-shrink:0;font-size:10.5px;font-weight:600;padding:7px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink-soft);}
+  .cat-chip.active{background:var(--green);border-color:var(--green);color:var(--white);}
+  .new-ticket-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;background:var(--red);color:var(--white);font-size:12.5px;font-weight:700;padding:13px;border-radius:13px;margin-bottom:14px;}
+  .ticket-form{display:none;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:16px;}
+  .ticket-form.open{display:block;animation:fadein .2s ease;}
+  .ticket-form label{font-size:11px;font-weight:600;color:var(--ink-soft);display:block;margin:10px 0 5px;}
+  .ticket-form label:first-child{margin-top:0;}
+  .row2{display:flex;gap:8px;} .row2>div{flex:1;}
+  .form-actions{display:flex;gap:8px;margin-top:14px;}
+  .form-actions button{flex:1;padding:11px;border-radius:10px;font-weight:700;font-size:12px;}
+  .btn-cancel{background:var(--bg);border:1px solid var(--line);color:var(--ink-soft);}
+  .btn-submit{background:var(--green);color:var(--white);}
+  .ticket-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin-bottom:9px;}
+  .tc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .tc-id{font-size:9.5px;color:var(--ink-soft);font-weight:700;letter-spacing:.03em;}
+  .tc-title{font-size:12.5px;font-weight:600;margin-top:3px;}
+  .tc-meta{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+  .pill{font-size:9.5px;font-weight:700;padding:3px 8px;border-radius:999px;}
+  .pill.cat{background:var(--green-t22);color:var(--green-light);}
+  .pill.crit{background:var(--red);color:var(--white);}
+  .pill.med{background:var(--red-t22);color:var(--red-light);}
+  .pill.low{background:var(--green-t22);color:var(--green-light);}
+  .pill.status-open{background:var(--red-t14);color:var(--red-light);border:1px solid var(--red-t22);}
+  .pill.status-done{background:var(--green-t14);color:var(--green-light);border:1px solid var(--green-t22);}
+  .tc-resolve{margin-left:auto;font-size:10px;font-weight:700;color:var(--red);}
+
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;background:var(--ink);color:var(--nav-bg);font-size:12px;font-weight:700;padding:11px 18px;border-radius:12px;text-align:center;z-index:999;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 10px 24px rgba(0,0,0,.35);max-width:88%;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+  .bottom-nav{position:absolute;left:0;right:0;bottom:0;background:var(--nav-bg);border-top:1px solid var(--line);display:flex;padding:10px 4px 13px;z-index:10;}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink-soft);font-size:15px;}
+  .nav-item .nav-label{font-size:9px;font-weight:600;}
+  .nav-item.active{color:var(--white);}
+  .nav-item.active .nav-icon-wrap{background:var(--green);border-radius:10px;}
+  .nav-icon-wrap{width:32px;height:26px;display:flex;align-items:center;justify-content:center;}
+
+  /* ===== VERSION PC (écran large) — même fichier, s'adapte automatiquement ===== */
+  @media (min-width: 900px){
+    body{padding:32px;}
+    .device{max-width:1180px;border-radius:20px;}
+    .header{padding:26px 40px 30px;}
+    .tabbar{flex-wrap:wrap;gap:10px;}
+    .tab{padding:10px 18px;font-size:12px;}
+    .content{padding:0 40px 60px;}
+    .kpi-grid{grid-template-columns:repeat(4,1fr);}
+    .press-grid{grid-template-columns:repeat(4,1fr);}
+    .tool-card{max-width:640px;}
+    .outil-nav{flex-wrap:wrap;}
+    .bottom-nav{position:relative;justify-content:center;gap:70px;margin-top:10px;}
+    .toast{bottom:26px;}
+    .cam-box{max-width:480px;margin-left:auto;margin-right:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="device"><div class="device-frame">
+
+  <!-- HEADER -->
+  <div class="header">
+    <svg class="zellige" viewBox="0 0 400 200" preserveAspectRatio="none">
+      <defs><pattern id="zpat" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M20 2 L38 20 L20 38 L2 20 Z" fill="none" stroke="white" stroke-width="0.8"/>
+        <path d="M20 10 L30 20 L20 30 L10 20 Z" fill="none" stroke="white" stroke-width="0.6"/>
+      </pattern></defs>
+      <rect width="400" height="200" fill="url(#zpat)"/>
+    </svg>
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5V11C4 16 7.5 20.2 12 22C16.5 20.2 20 16 20 11V5L12 2Z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        <div class="brand-text"><div class="eyebrow">MAROC · SOC PLATFORM</div><div class="title">SafeStade2</div></div>
+      </div>
+      <div class="head-actions">
+        <button class="bell-btn" onclick="toggleNotifPanel()">🔔<span class="bell-dot" id="notifDot"></span></button>
+        <button class="org-badge role-btn" id="roleBtn" onclick="cycleRole()">👤 Admin</button>
+      </div>
+    </div>
+    <div class="notif-panel" id="notifPanel"></div>
+    <div id="headerTitle" class="header-screen-title">Tableau de bord</div>
+    <div id="headerSub" class="header-screen-sub">Stade de Rabat — SOC, cyberdéfense et conformité</div>
+    <div style="position:relative;z-index:2;margin-top:6px;font-size:9.5px;font-weight:700;color:var(--green-light);background:rgba(0,0,0,.25);display:inline-block;padding:3px 9px;border-radius:999px;">BUILD 2026-09-19-v5 · SafeStade2 — utilise IMPÉRATIVEMENT le lien publié (pas le fichier local)</div>
+
+    <div class="tabbar" id="tabbar">
+      <button class="tab active" data-nav="dashboard" onclick="showScreen('dashboard')">Dashboard</button>
+      <button class="tab" data-nav="securite" onclick="showScreen('securite')">Sécurité</button>
+      <button class="tab" data-nav="soc" onclick="showScreen('soc')">SOC</button>
+      <button class="tab" data-nav="tickets" onclick="showScreen('tickets')">Tickets</button>
+      <button class="tab" data-nav="outils" onclick="showScreen('outils')">Outils</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="screen active" id="screen-dashboard">
+      <div class="section-title"><h2>Indicateurs clés</h2></div>
+      <div class="kpi-grid">
+        <div class="kpi safe"><div class="kpi-num">87%</div><div class="kpi-label">Score sécurité global</div><span class="kpi-delta">+3 pts</span></div>
+        <div class="kpi alert"><div class="kpi-num" id="dashAlerts">0</div><div class="kpi-label">Alertes actives</div><span class="kpi-delta">temps réel</span></div>
+      </div>
+      <div class="section-title"><h2>État des connexions réelles</h2></div>
+      <div class="row-card"><div class="row-icon ok">🔗</div><div class="row-text"><div class="row-title">Webhook AbaFusion</div><div class="row-meta" id="dashWebhookStatus">Non testé</div></div></div>
+      <div class="row-card"><div class="row-icon ok">📟</div><div class="row-text"><div class="row-title">ESP32</div><div class="row-meta" id="dashEspStatus">Déconnecté</div></div></div>
+      <div class="row-card"><div class="row-icon ok">🧬</div><div class="row-text"><div class="row-title">Biométrie (empreinte)</div><div class="row-meta" id="dashFpStatus">Aucune empreinte enregistrée</div></div></div>
+      <div class="tool-note">Va dans l'onglet <b>Outils</b> pour configurer et tester chaque fonction réelle (webhook, ESP32, scan facial, empreinte, WhatsApp, email).</div>
+    </div>
+
+    <!-- SECURITE : contrôles réels, état persisté sur l'appareil -->
+    <div class="screen" id="screen-securite">
+      <div class="section-title"><h2>Contrôles de sécurité</h2><span class="tag" id="secScoreTag">0/0 actifs</span></div>
+      <div id="secList"></div>
+      <div class="tool-note">Chaque interrupteur est un vrai état sauvegardé sur cet appareil (localStorage) — il reste actif même après fermeture de la page. Utilise-le pour suivre l'état réel de tes mesures de sécurité.</div>
+    </div>
+
+    <!-- SOC : journal d'audit réel des actions effectuées dans l'appli -->
+    <div class="screen" id="screen-soc">
+      <div class="section-title"><h2>Centre d'opérations (SOC)</h2><button class="tool-btn ghost" style="width:auto;margin:0;padding:6px 12px;font-size:10px" onclick="clearAudit()">Vider</button></div>
+      <div class="row-card"><div class="row-icon ok">📟</div><div class="row-text"><div class="row-title">ESP32</div><div class="row-meta" id="socEspStatus">Déconnecté</div></div><span class="led-dot" id="socEspLed"></span></div>
+      <div class="row-card"><div class="row-icon ok">🔗</div><div class="row-text"><div class="row-title">Webhook AbaFusion</div><div class="row-meta" id="socWebhookStatus">Non testé</div></div></div>
+      <div class="section-title"><h2>Journal d'activité réel</h2></div>
+      <div id="auditList"></div>
+    </div>
+
+    <!-- TICKETS : gestion réelle (création, liste, résolution) persistée -->
+    <div class="screen" id="screen-tickets">
+      <div class="section-title"><h2>Tickets</h2></div>
+      <div class="cat-row">
+        <button class="cat-chip active" data-cat="all" onclick="filterTickets('all', this)">Tous</button>
+        <button class="cat-chip" data-cat="securite" onclick="filterTickets('securite', this)">Sécurité</button>
+        <button class="cat-chip" data-cat="technique" onclick="filterTickets('technique', this)">Technique</button>
+        <button class="cat-chip" data-cat="acces" onclick="filterTickets('acces', this)">Accès</button>
+      </div>
+      <button class="new-ticket-btn" onclick="toggleTicketForm()">+ Nouveau ticket</button>
+      <div class="ticket-form" id="ticketForm">
+        <label>Titre</label>
+        <input class="tool-input" id="tkTitle" placeholder="Ex : Caméra bloc B hors service">
+        <div class="row2">
+          <div><label>Catégorie</label>
+            <select class="tool-input" id="tkCat"><option value="securite">Sécurité</option><option value="technique">Technique</option><option value="acces">Accès</option></select>
+          </div>
+          <div><label>Priorité</label>
+            <select class="tool-input" id="tkPriority"><option value="crit">Critique</option><option value="med">Moyenne</option><option value="low">Faible</option></select>
+          </div>
+        </div>
+        <label>Description</label>
+        <textarea class="tool-input" id="tkDesc" placeholder="Détails..."></textarea>
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="toggleTicketForm()">Annuler</button>
+          <button class="btn-submit" onclick="createTicket()">Créer</button>
+        </div>
+      </div>
+      <div id="ticketList"></div>
+      <div class="empty-note" id="ticketEmpty" style="display:none">Aucun ticket pour l'instant.</div>
+    </div>
+
+    <!-- ============ OUTILS ============ -->
+    <div class="screen" id="screen-outils">
+      <div class="section-title"><h2>Outils avancés</h2></div>
+      <div class="outil-nav">
+        <button class="active" data-outil="aba" onclick="showOutil('aba')">AbaFusion</button>
+        <button data-outil="esp" onclick="showOutil('esp')">ESP32</button>
+        <button data-outil="face" onclick="showOutil('face')">Scan facial</button>
+        <button data-outil="finger" onclick="showOutil('finger')">Empreinte</button>
+        <button data-outil="scanticket" onclick="showOutil('scanticket')">Scan ticket</button>
+        <button data-outil="presse" onclick="showOutil('presse')">Presse</button>
+        <button data-outil="crypto" onclick="showOutil('crypto')">Hash/Chiffrement</button>
+      </div>
+
+      <!-- ===== ABAFUSION / WEBHOOK ===== -->
+      <div class="outil-panel active" id="outil-aba">
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">⚡ Webhook AbaFusion</div><span class="sim-badge pending" id="abaBadge">NON TESTÉ</span></div>
+          <div class="tool-sub">Envoi HTTP POST réel (fetch) vers l'URL de ton webhook. Si l'envoi échoue, le message d'erreur exact s'affiche pour diagnostiquer (CORS, URL invalide, serveur down…).</div>
+          <label class="tool-label">URL du webhook (destination finale)</label>
+          <input class="tool-input" id="abaUrl" value="https://stg-orch-api.abafusion.ai/webhook/webhook-an3c225cy5ezunx9giqn0o4h/aba">
+          <label class="tool-label">URL du proxy anti-CORS (préconfiguré, modifiable)</label>
+          <input class="tool-input" id="abaProxyUrl" value="https://corsproxy.io/?url=">
+          <div class="tool-note">Proxy public déjà en ligne, actif immédiatement. Pour ta propre URL fiable (recommandé pour de la production), déploie <code>webhook-proxy-worker.js</code> sur Cloudflare Workers (gratuit, 5 min) et remplace la valeur ci-dessus par <code>https://ton-worker.xxx.workers.dev/?url=</code> — garde bien le <code>?url=</code> à la fin.</div>
+          <label class="tool-label">Charge utile (JSON, modifiable)</label>
+          <textarea class="tool-input" id="abaPayload">{"event":"test_safestade","source":"safestade-pro","timestamp":""}</textarea>
+          <label class="tool-label"><input type="checkbox" id="abaAutoSync"> Synchronisation automatique à chaque ticket critique</label>
+          <div class="btn-pair">
+            <button class="tool-btn ghost" onclick="testWebhook()">Tester (GET)</button>
+            <button class="tool-btn primary" onclick="sendWebhook()">Envoyer (POST réel)</button>
+          </div>
+          <button class="tool-btn green" onclick="quickConnectAbaFusion()">⚡ Connexion rapide AbaFusion (via internet, proxy)</button>
+          <button class="tool-btn primary" onclick="sendWebhookViaEsp32()">📡 Simuler l'appui sur BTN1 (test, ESP32 sans Wi-Fi)</button>
+          <div class="status-line"><span>Statut</span><span class="state-pill pending" id="abaStatusPill">En attente</span></div>
+          <div class="honest-note"><b>Pourquoi ça échouait avant :</b> la plupart des échecs viennent soit d'une URL de webhook expirée/désactivée côté AbaFusion, soit du serveur qui refuse les requêtes cross-origin (CORS) envoyées depuis un navigateur. Ce module fait un vrai appel réseau et t'affiche l'erreur exacte renvoyée — copie-la pour vérifier côté AbaFusion. Pour un test rapide sans compte, remplace l'URL par une URL webhook.site : ça te confirme que l'envoi lui-même fonctionne.</div>
+        </div>
+      </div>
+
+      <!-- ===== ESP32 ===== -->
+      <div class="outil-panel" id="outil-esp">
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">📟 ESP32 — USB uniquement</div><span class="led-dot" id="espLed"></span></div>
+          <div class="tool-sub">Connexion filaire USB directe (Web Serial) — 100% hors-ligne. Aucune IP, aucun Wi-Fi, aucun Bluetooth.</div>
+          <button class="tool-btn ghost" onclick="connectSerial()">🔌 Connecter via USB</button>
+
+          <label class="tool-label">Commande à envoyer</label>
+          <div class="chip-select">
+            <button class="mini-chip active" data-cmd="LED1_ON" onclick="setEspCmd('LED1_ON', this)">LED1 ON</button>
+            <button class="mini-chip" data-cmd="LED1_OFF" onclick="setEspCmd('LED1_OFF', this)">LED1 OFF</button>
+            <button class="mini-chip" data-cmd="LED2_ON" onclick="setEspCmd('LED2_ON', this)">LED2 ON</button>
+            <button class="mini-chip" data-cmd="LED2_OFF" onclick="setEspCmd('LED2_OFF', this)">LED2 OFF</button>
+            <button class="mini-chip" data-cmd="RELAY1_ON" onclick="setEspCmd('RELAY1_ON', this)">Relais1 ON</button>
+            <button class="mini-chip" data-cmd="RELAY1_OFF" onclick="setEspCmd('RELAY1_OFF', this)">Relais1 OFF</button>
+            <button class="mini-chip" data-cmd="RELAY2_ON" onclick="setEspCmd('RELAY2_ON', this)">Relais2 ON</button>
+            <button class="mini-chip" data-cmd="RELAY2_OFF" onclick="setEspCmd('RELAY2_OFF', this)">Relais2 OFF</button>
+            <button class="mini-chip" data-cmd="BUZZER" onclick="setEspCmd('BUZZER', this)">Bip court</button>
+          </div>
+          <button class="tool-btn primary" onclick="sendEspCommand()">Envoyer la commande</button>
+          <div class="btn-pair">
+            <button class="tool-btn primary" onclick="sendEspRawCommand('ALARM_ON')">🚨 Alarme forte</button>
+            <button class="tool-btn ghost" onclick="sendEspRawCommand('ALARM_OFF')">Arrêter</button>
+          </div>
+          <div class="status-line"><span>Mode alerte automatique</span><span class="state-pill" id="alertPill">OFF</span></div>
+          <div class="btn-pair">
+            <button class="tool-btn primary" onclick="sendEspRawCommand('ALERT_ON'); setAlertPill(true)">Activer</button>
+            <button class="tool-btn ghost" onclick="sendEspRawCommand('ALERT_OFF'); setAlertPill(false)">Désactiver</button>
+          </div>
+          <div class="tool-note">En mode alerte activé, le firmware ESP32 déclenche <b>lui-même</b> la LED rouge + l'alarme dès qu'un vrai passage est détecté par le capteur IR — sans intervention du téléphone.</div>
+
+          <label class="tool-label" style="margin-top:16px">📡 Capteur infrarouge (réel, via USB)</label>
+          <div class="btn-pair">
+            <button class="tool-btn ghost" onclick="readEspSensorSerial('GET_IR')">Lire le capteur IR réel</button>
+          </div>
+          <div class="status-line"><span>État IR</span><span class="state-pill" id="irPill">Inconnu</span></div>
+
+          <label class="tool-label">🌡️ Température (réelle, via USB)</label>
+          <button class="tool-btn ghost" onclick="readEspSensorSerial('GET_TEMP')">Lire la température (capteur réel)</button>
+          <div class="status-line"><span>Température</span><span class="state-pill" id="tempPill">—</span></div>
+
+          <label class="tool-label" style="margin-top:16px">⏱️ Minuterie (déclenche l'alarme à zéro)</label>
+          <div class="btn-pair">
+            <input class="tool-input" id="timerSeconds" type="number" value="15" style="flex:0 0 90px">
+            <button class="tool-btn primary" onclick="startEspTimer()">▶️ Démarrer</button>
+            <button class="tool-btn ghost" onclick="stopEspTimer()">⏹️ Arrêter</button>
+          </div>
+          <div class="status-line"><span>Minuterie</span><span class="state-pill" id="timerPill">INACTIVE</span></div>
+
+          <div class="status-line"><span>Connexion ESP32</span><span class="state-pill pending" id="espStatusPill">Déconnecté</span></div>
+          <div class="honest-note"><b>🔴 ESP32 sans Wi-Fi, USB uniquement :</b> cette carte ne se connecte à aucun réseau. Un appui sur le bouton BTN1 (à côté du logo Wi-Fi imprimé) envoie juste un signal par le câble USB — c'est le <u>téléphone</u>, avec sa propre connexion internet (Wi-Fi/4G), qui envoie réellement à AbaFusion à ce moment-là. Ça marche donc uniquement si le téléphone est connecté à internet ET l'ESP32 branché en USB avec cette page ouverte. <b>Aucun CORS possible</b> ici puisque tout passe par USB + le proxy déjà configuré dans l'onglet AbaFusion. <b>Limite matérielle :</b> si le capteur température n'est pas détecté au démarrage (message série "TEMP_SENSOR:NON_DETECTE"), vérifie le branchement I2C (SDA/SCL). <b>Limite navigateur :</b> Web Serial fonctionne sur Chrome/Edge desktop et Android — pas sur Safari/iOS.</div>
+        </div>
+      </div>
+
+      <!-- ===== SCAN FACIAL ===== -->
+      <div class="outil-panel" id="outil-face">
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">🩺 Diagnostic de l'environnement</div></div>
+          <div id="diagResultFace" style="font-family:monospace;font-size:11px;line-height:1.8;margin-top:8px"></div>
+          <button class="tool-btn ghost" onclick="runDiagnostics('diagResultFace')" style="margin-top:8px">Relancer le diagnostic</button>
+        </div>
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">🎥 Scan facial (caméra réelle)</div><span class="sim-badge pending" id="faceBadge">CAMÉRA INACTIVE</span></div>
+          <div class="tool-sub">Utilise la vraie caméra de l'appareil. La détection de présence d'un visage utilise l'API native du navigateur quand elle est disponible.</div>
+          <div class="cam-box" id="camBox">
+            <video id="camVideo" autoplay playsinline muted></video>
+            <canvas id="camCanvas"></canvas>
+            <img id="camSnapshot" style="display:none">
+          </div>
+          <div class="btn-pair">
+            <button class="tool-btn ghost" onclick="startCamera()">📷 Activer la caméra</button>
+            <button class="tool-btn ghost" onclick="switchCamera()">🔄 Avant/Arrière</button>
+            <button class="tool-btn primary" onclick="captureFace()">✅ Capturer / Vérifier</button>
+          </div>
+          <div class="scan-result" id="faceResult"></div>
+          <div class="honest-note"><b>Ce que fait réellement ce module :</b> il capture une vraie photo via ta caméra et détecte si un visage est présent dans le cadre (liveness basique). <b>Ce qu'il ne fait pas :</b> il ne reconnaît pas l'identité d'une personne parmi plusieurs (ça demanderait un moteur de reconnaissance faciale entraîné + une base de visages de référence, hors de portée d'une page web seule). Si tu as besoin de vraie identification 1-vers-N, il faut un service dédié (AWS Rekognition, Azure Face, etc.) — dis-le-moi et je peux préparer l'intégration.</div>
+        </div>
+      </div>
+
+      <!-- ===== EMPREINTE ===== -->
+      <div class="outil-panel" id="outil-finger">
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">🩺 Diagnostic de l'environnement</div></div>
+          <div id="diagResultFinger" style="font-family:monospace;font-size:11px;line-height:1.8;margin-top:8px"></div>
+          <button class="tool-btn ghost" onclick="runDiagnostics('diagResultFinger')" style="margin-top:8px">Relancer le diagnostic</button>
+        </div>
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">🖐️ Empreinte digitale réelle</div><span class="sim-badge pending" id="fpBadge">AUCUNE</span></div>
+          <div class="tool-sub">Utilise le vrai capteur biométrique de l'appareil (Touch ID, Windows Hello, capteur Android) via l'API WebAuthn du navigateur.</div>
+          <div class="fingerprint-zone" onclick="enrollFingerprint()">
+            <div class="fp-icon" id="fpIcon">🔒</div>
+            <div class="fp-label" id="fpLabel">Toucher pour enregistrer une empreinte</div>
+          </div>
+          <button class="tool-btn primary" onclick="verifyFingerprint()">✅ Vérifier l'empreinte</button>
+          <div class="scan-result" id="fpResult"></div>
+          <div class="honest-note"><b>Vraiment réel :</b> ce module déclenche le capteur physique de ton appareil (Touch ID / Face ID / Windows Hello / empreinte Android) via WebAuthn — le système d'exploitation gère la vérification biométrique, personne (ni moi ni la page) n'a accès à tes données biométriques brutes. Nécessite HTTPS et un appareil avec capteur biométrique. Pour une vraie production, la vérification cryptographique finale doit se faire côté serveur — ici la démo confirme le succès au niveau du navigateur.</div>
+        </div>
+      </div>
+
+      <!-- ===== SCAN TICKET (caméra réelle, QR/code-barres) ===== -->
+      <div class="outil-panel" id="outil-scanticket">
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">🎫 Scan de ticket (caméra réelle)</div><span class="sim-badge pending" id="scanTicketBadge">INACTIF</span></div>
+          <div class="tool-sub">Scanne un vrai QR code / code-barres via la caméra pour valider un billet.</div>
+          <div class="cam-box" id="ticketCamBox">
+            <video id="tkVideo" autoplay playsinline muted></video>
+            <canvas id="tkCanvas"></canvas>
+          </div>
+          <div class="btn-pair">
+            <button class="tool-btn ghost" onclick="startTicketScan()">📷 Démarrer le scan</button>
+            <button class="tool-btn ghost" onclick="stopTicketScan()">⏹️ Arrêter</button>
+          </div>
+          <label class="tool-label">Ou saisir le code manuellement</label>
+          <div class="btn-pair">
+            <input class="tool-input" id="tkManualCode" placeholder="Code du ticket">
+            <button class="tool-btn primary" style="flex:0 0 100px" onclick="checkTicketCode(document.getElementById('tkManualCode').value)">Vérifier</button>
+          </div>
+          <div class="scan-result" id="ticketScanResult"></div>
+          <div class="honest-note"><b>Réel :</b> la lecture QR/code-barres utilise l'API native <code>BarcodeDetector</code> du navigateur (Chrome/Edge) sur le flux caméra en direct. Les codes valides de démonstration sont <code>SAFE-0001</code>, <code>SAFE-0002</code>, <code>SAFE-0003</code> (stockés en local) — un code scanné une seconde fois est signalé "déjà utilisé". Ajoute tes vrais codes de billets dans la fonction <code>validTicketCodes</code> du script, ou connecte ta billetterie via le webhook AbaFusion pour une vraie base à jour.</div>
+        </div>
+      </div>
+
+      <!-- ===== PRESSE ===== -->
+      <div class="outil-panel" id="outil-presse">
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">📣 Communication — Presse</div></div>
+          <div class="tool-sub">Envoi réel via WhatsApp (ouvre une vraie conversation) et par email.</div>
+
+          <label class="tool-label">Numéro WhatsApp (avec indicatif, ex: 2126xxxxxxxx)</label>
+          <input class="tool-input" id="waNumber" placeholder="212600000000">
+          <label class="tool-label">Message</label>
+          <textarea class="tool-input" id="waMessage">Alerte SafeStade Pro : anomalie détectée, merci de vérifier.</textarea>
+          <button class="tool-btn green" onclick="sendWhatsApp()">🟢 Envoyer sur WhatsApp</button>
+
+          <label class="tool-label" style="margin-top:16px">Email destinataire</label>
+          <input class="tool-input" id="mailTo" placeholder="contact@exemple.com">
+          <label class="tool-label">Sujet</label>
+          <input class="tool-input" id="mailSubject" value="Alerte SafeStade Pro">
+          <label class="tool-label">Message</label>
+          <textarea class="tool-input" id="mailBody">Une anomalie a été détectée par SafeStade Pro. Merci de vérifier le tableau de bord.</textarea>
+          <button class="tool-btn primary" onclick="sendEmail()">✉️ Envoyer l'email</button>
+
+          <div class="honest-note"><b>WhatsApp :</b> ouvre une vraie conversation WhatsApp (app ou web) avec le numéro et message pré-remplis — l'envoi final se fait d'un vrai clic dans WhatsApp, comportement normal et volontaire (aucune app tierce ne peut envoyer un WhatsApp à ta place sans ton clic). <b>Email :</b> ouvre ton vrai client mail (Gmail, Outlook…) avec le message prêt à envoyer. <b>Synchronisation AbaFusion :</b> chaque envoi WhatsApp ou email est automatiquement transmis à AbaFusion — via l'ESP32 en USB s'il est connecté (aucun CORS), sinon via le webhook/proxy du navigateur.</div>
+        </div>
+      </div>
+
+      <!-- ===== HACHAGE & CHIFFREMENT (Web Crypto réel) ===== -->
+      <div class="outil-panel" id="outil-crypto">
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">📇 Destinataires (partagés)</div></div>
+          <div class="tool-sub">Utilisés par les deux options ci-dessous pour l'envoi WhatsApp et email.</div>
+          <label class="tool-label">Numéro WhatsApp destinataire</label>
+          <input class="tool-input" id="cryptoWaNumber" placeholder="212600000000">
+          <label class="tool-label">Email destinataire</label>
+          <input class="tool-input" id="cryptoMailTo" placeholder="contact@exemple.com">
+        </div>
+
+        <!-- ===== OPTION 1 : HACHAGE ===== -->
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">🔎 Option 1 — Hachage (SHA-256)</div><span class="sim-badge on">RÉEL</span></div>
+          <div class="tool-sub">Preuve d'intégrité irréversible d'un rapport, contrat ou texte sensible.</div>
+          <label class="tool-label">Texte du rapport / contrat / donnée sensible</label>
+          <textarea class="tool-input" id="cryptoText" style="height:80px" placeholder="Colle ici le contenu à sécuriser..."></textarea>
+          <button class="tool-btn ghost" onclick="generateDocHash()">Générer le hash</button>
+          <div class="status-line" id="cryptoHashBox" style="display:none;flex-direction:column;align-items:flex-start;gap:4px">
+            <span style="font-size:10px;color:var(--ink-soft)">Empreinte SHA-256</span>
+            <span id="cryptoHashResult" style="font-family:monospace;font-size:10.5px;word-break:break-all"></span>
+          </div>
+          <button class="tool-btn green" onclick="sendHashEverywhere()" style="margin-top:10px">📤 Envoyer le hash — AbaFusion (ESP32) + WhatsApp + Email</button>
+        </div>
+
+        <!-- ===== OPTION 2 : CHIFFREMENT ===== -->
+        <div class="tool-card">
+          <div class="tool-head"><div class="tool-title">🔒 Option 2 — Chiffrement (AES-256)</div><span class="sim-badge on">RÉEL</span></div>
+          <div class="tool-sub">Protège le contenu — réversible uniquement avec le bon mot de passe.</div>
+          <label class="tool-label">Mot de passe de chiffrement</label>
+          <input class="tool-input" id="cryptoPassword" type="password" placeholder="Choisis un mot de passe fort">
+          <div class="btn-pair">
+            <button class="tool-btn primary" onclick="encryptDoc()">Chiffrer</button>
+            <button class="tool-btn ghost" onclick="decryptDoc()">Déchiffrer</button>
+          </div>
+          <div id="cryptoCipherBox" style="display:none">
+            <label class="tool-label">Texte chiffré (à conserver pour déchiffrer plus tard)</label>
+            <textarea class="tool-input" id="cryptoCipherResult" style="height:70px"></textarea>
+          </div>
+          <button class="tool-btn green" onclick="sendCipherEverywhere()" style="margin-top:10px">📤 Envoyer le chiffré — AbaFusion (ESP32) + WhatsApp + Email</button>
+          <div class="honest-note"><b>Réel :</b> SHA-256 et AES-256-GCM = API native <code>Web Crypto</code>, pas une simulation. <b>Sécurité :</b> le texte en clair n'est jamais envoyé — seulement le hash ou le chiffré. <b>Limite technique honnête :</b> WhatsApp/email ont une limite de longueur de message — si le contenu chiffré est trop long, seul un extrait + la mention "texte complet envoyé à AbaFusion" partent par ces deux canaux ; AbaFusion, lui, reçoit toujours l'intégralité. Mot de passe perdu = contenu irrécupérable, pour tout le monde.</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-item active" data-nav="dashboard" onclick="showScreen('dashboard')"><div class="nav-icon-wrap">🏠</div><div class="nav-label">Dashboard</div></button>
+    <button class="nav-item" data-nav="securite" onclick="showScreen('securite')"><div class="nav-icon-wrap">🛡️</div><div class="nav-label">Sécurité</div></button>
+    <button class="nav-item" data-nav="soc" onclick="showScreen('soc')"><div class="nav-icon-wrap">🖥️</div><div class="nav-label">SOC</div></button>
+    <button class="nav-item" data-nav="tickets" onclick="showScreen('tickets')"><div class="nav-icon-wrap">🎫</div><div class="nav-label">Tickets</div></button>
+    <button class="nav-item" data-nav="outils" onclick="showScreen('outils')"><div class="nav-icon-wrap">🛠️</div><div class="nav-label">Outils</div></button>
+  </div>
+
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- NAVIGATION ---------- */
+const titles = {
+  dashboard:["Tableau de bord","Stade de Rabat — SOC, cyberdéfense et conformité"],
+  securite:["Sécurité","Vue sécurité"],
+  soc:["SOC","Centre d'opérations"],
+  tickets:["Tickets","Suivi des incidents"],
+  outils:["Outils avancés","AbaFusion, ESP32, scan, presse — connexions réelles"]
+};
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.nav===name));
+  document.querySelectorAll('.nav-item').forEach(t=>t.classList.toggle('active', t.dataset.nav===name));
+  document.getElementById('headerTitle').textContent = titles[name][0];
+  document.getElementById('headerSub').textContent = titles[name][1];
+}
+function toggleNotifPanel(){
+  const p = document.getElementById('notifPanel');
+  p.classList.toggle('open');
+  if(p.classList.contains('open')) p.innerHTML = '<div class="notif-item"><b>Aucune notification</b>Tout est à jour.</div>';
+}
+function cycleRole(){
+  const btn = document.getElementById('roleBtn');
+  btn.textContent = btn.textContent.includes('Admin') ? '👤 Agent' : '👤 Admin';
+}
+function toast(msg, ms){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._to);
+  t._to = setTimeout(()=>t.classList.remove('show'), ms||3200);
+}
+
+/* ---------- ABAFUSION WEBHOOK (réel, fetch) ---------- */
+function setAbaStatus(state, msg){
+  const pill = document.getElementById('abaStatusPill');
+  const badge = document.getElementById('abaBadge');
+  pill.textContent = msg;
+  pill.className = 'state-pill ' + (state==='ok'?'on':state==='pending'?'pending':'');
+  badge.textContent = state==='ok' ? 'CONNECTÉ' : state==='pending' ? 'ENVOI…' : 'ÉCHEC';
+  badge.className = 'sim-badge ' + (state==='ok'?'on':state==='pending'?'pending':'');
+  document.getElementById('dashWebhookStatus').textContent = msg;
+}
+async function testWebhook(){
+  const url = document.getElementById('abaUrl').value.trim();
+  const proxyUrl = document.getElementById('abaProxyUrl').value.trim();
+  if(!url){ toast('Renseigne une URL de webhook'); return; }
+  setAbaStatus('pending','Test en cours…');
+  try{
+    const target = proxyUrl ? (proxyUrl + encodeURIComponent(url)) : url;
+    const res = await fetch(target, {method:'GET'});
+    setAbaStatus('ok', 'Réponse reçue : HTTP ' + res.status);
+    toast('Webhook joignable — HTTP ' + res.status);
+  }catch(err){
+    setAbaStatus('fail', 'Échec : ' + err.message);
+    toast('Échec du test : ' + err.message, 4500);
+  }
+}
+async function sendWebhook(){
+  const url = document.getElementById('abaUrl').value.trim();
+  const proxyUrl = document.getElementById('abaProxyUrl').value.trim();
+  let payloadRaw = document.getElementById('abaPayload').value;
+  if(!url){ toast('Renseigne une URL de webhook'); return; }
+  let payload;
+  try{
+    payload = JSON.parse(payloadRaw);
+    payload.timestamp = new Date().toISOString();
+  }catch(e){
+    toast('JSON invalide dans la charge utile'); return;
+  }
+  setAbaStatus('pending','Envoi en cours…');
+  try{
+    let res;
+    if(proxyUrl){
+      // Passthrough : le proxy transmet la requête réelle vers AbaFusion côté serveur (pas de CORS ici)
+      res = await fetch(proxyUrl + encodeURIComponent(url), {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+    } else {
+      res = await fetch(url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+    }
+    const text = await res.text().catch(()=> '');
+    if(res.ok){
+      setAbaStatus('ok', 'Envoyé — HTTP ' + res.status);
+      toast('Webhook envoyé avec succès (HTTP ' + res.status + ')');
+      logAudit('Webhook AbaFusion envoyé (HTTP ' + res.status + ')');
+    } else {
+      setAbaStatus('fail', 'Refusé — HTTP ' + res.status);
+      toast('Le serveur a refusé la requête : HTTP ' + res.status + (text? ' — '+text.slice(0,120):''), 5000);
+      logAudit('Webhook refusé (HTTP ' + res.status + ')', true);
+    }
+  }catch(err){
+    setAbaStatus('fail', 'Échec réseau : ' + err.message);
+    logAudit('Échec webhook : ' + err.message, true);
+    toast(proxyUrl
+      ? ('Échec via le proxy : ' + err.message)
+      : ('Échec de l\'envoi direct : ' + err.message + ' — remplis "URL du proxy" ci-dessus pour contourner le blocage CORS.'), 5500);
+  }
+}
+
+/* ---------- ESP32 : USB Serial UNIQUEMENT (aucune IP, aucun Wi-Fi, aucun Bluetooth) ---------- */
+let espCmd = 'LED1_ON';
+let serialPort = null, serialWriter = null, serialReader = null;
+let pendingSensorResolve = null;
+
+function setEspCmd(cmd, el){
+  espCmd = cmd;
+  document.querySelectorAll('[data-cmd]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+function setEspConnected(ok, label){
+  document.getElementById('espLed').className = 'led-dot ' + (ok?'green':'red');
+  const pill = document.getElementById('espStatusPill');
+  pill.textContent = label;
+  pill.className = 'state-pill ' + (ok?'on':'');
+  document.getElementById('dashEspStatus').textContent = label;
+}
+async function connectSerial(){
+  if(!navigator.serial){ toast('Web Serial non supporté par ce navigateur — utilise Chrome ou Edge (desktop ou Android). Safari/iOS ne le supporte pas.', 6000); return; }
+  try{
+    serialPort = await navigator.serial.requestPort();
+    await serialPort.open({ baudRate: 115200 });
+    serialWriter = serialPort.writable.getWriter();
+    setEspConnected(true, 'USB Serial connecté');
+    toast('ESP32 connecté en USB (hors-ligne, aucune IP)');
+    logAudit('ESP32 connecté via USB');
+    readSerialLoop();
+  }catch(err){
+    setEspConnected(false, 'Échec USB : ' + err.message);
+    toast('Échec connexion USB : ' + err.message, 4500);
+  }
+}
+async function readSerialLoop(){
+  const decoder = new TextDecoderStream();
+  serialPort.readable.pipeTo(decoder.writable);
+  serialReader = decoder.readable.getReader();
+  let buffer = '';
+  try{
+    while(true){
+      const { value, done } = await serialReader.read();
+      if(done) break;
+      buffer += value;
+      let idx;
+      while((idx = buffer.indexOf('\n')) >= 0){
+        const line = buffer.slice(0, idx).trim();
+        buffer = buffer.slice(idx+1);
+        if(line) handleSerialLine(line);
+      }
+    }
+  }catch(e){ /* port fermé */ }
+}
+function handleSerialLine(line){
+  if(line.startsWith('TEMP:')){
+    const val = line.split(':')[1];
+    document.getElementById('tempPill').textContent = val + ' °C';
+    document.getElementById('tempPill').className = 'state-pill on';
+    logAudit('Température lue (USB) : ' + val + ' °C');
+  } else if(line.startsWith('IR:')){
+    const state = line.split(':')[1];
+    const pill = document.getElementById('irPill');
+    if(state === 'AUTO_TRIGGER'){ logAudit('IR : détection automatique, alarme déclenchée', true); return; }
+    pill.textContent = state === 'DETECTED' ? 'DÉTECTÉ' : 'LIBRE';
+    pill.className = 'state-pill' + (state==='DETECTED' ? '' : ' on');
+    logAudit('Capteur IR lu (USB) : ' + state);
+  } else if(line === 'BTN1:TRIGGER_ABAFUSION'){
+    // L'ESP32 n'a aucun Wi-Fi : il signale juste l'appui. C'est le téléphone,
+    // avec sa propre connexion internet, qui envoie réellement à AbaFusion.
+    toast('Bouton BTN1 de la carte détecté — envoi à AbaFusion via le téléphone…');
+    logAudit('BTN1 (carte, sans Wi-Fi) → envoi déclenché depuis le téléphone');
+    quickConnectAbaFusion();
+  }
+}
+async function sendWebhookViaEsp32(){
+  if(!serialWriter){ toast('Connecte d\'abord l\'ESP32 en USB (onglet ESP32)'); return; }
+  try{
+    await serialWriter.write(new TextEncoder().encode('TEST_BTN1\n'));
+    toast('Simulation de l\'appui BTN1 envoyée à l\'ESP32…');
+    logAudit('Test BTN1 déclenché depuis l\'appli');
+  }catch(err){
+    toast('Échec : ' + err.message, 4500);
+  }
+}
+async function sendEspCommand(){
+  await sendEspRawCommand(espCmd);
+}
+async function sendEspRawCommand(cmd){
+  if(!serialWriter){ toast('Connecte d\'abord l\'ESP32 en USB'); return; }
+  try{
+    await serialWriter.write(new TextEncoder().encode(cmd+'\n'));
+    toast('Commande '+cmd+' envoyée en USB (hors-ligne)');
+    logAudit('ESP32 (USB) : ' + cmd);
+    syncToAbaFusion('esp32_command', { command: cmd });
+  }catch(err){ toast('Échec écriture USB : '+err.message, 4500); }
+}
+async function readEspSensorSerial(cmd){
+  await sendEspRawCommand(cmd);
+}
+function setAlertPill(on){
+  const p = document.getElementById('alertPill');
+  p.textContent = on ? 'ON' : 'OFF';
+  p.className = 'state-pill' + (on?' on':'');
+}
+let espTimerInterval = null;
+function startEspTimer(){
+  let seconds = parseInt(document.getElementById('timerSeconds').value, 10);
+  if(!seconds || seconds <= 0){ toast('Renseigne une durée valide'); return; }
+  stopEspTimer();
+  const pill = document.getElementById('timerPill');
+  pill.textContent = seconds + 's'; pill.className='state-pill on';
+  logAudit('Minuterie ESP32 démarrée : ' + seconds + 's');
+  espTimerInterval = setInterval(()=>{
+    seconds--;
+    if(seconds <= 0){
+      clearInterval(espTimerInterval); espTimerInterval = null;
+      pill.textContent = 'DÉCLENCHÉE'; pill.className='state-pill';
+      sendEspRawCommand('ALARM_ON');
+      toast('Minuterie terminée — alarme déclenchée');
+      logAudit('Minuterie terminée : alarme déclenchée', true);
+    } else {
+      pill.textContent = seconds + 's';
+    }
+  }, 1000);
+}
+function stopEspTimer(){
+  if(espTimerInterval){ clearInterval(espTimerInterval); espTimerInterval=null; }
+  document.getElementById('timerPill').textContent='INACTIVE';
+  document.getElementById('timerPill').className='state-pill pending';
+}
+
+/* ---------- Connexion rapide AbaFusion (test puis envoi, en un clic) ---------- */
+async function quickConnectAbaFusion(){
+  toast('Test de connexion en cours…');
+  await testWebhook();
+  setTimeout(async ()=>{
+    await sendWebhook();
+  }, 600);
+}
+
+
+/* ---------- DIAGNOSTIC RÉEL DE L'ENVIRONNEMENT ---------- */
+async function runDiagnostics(targetId){
+  const proto = location.protocol;
+  const secure = window.isSecureContext;
+  const hasCam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  const hasWebAuthn = !!window.PublicKeyCredential;
+  let platformAuth = 'Non vérifiable';
+  if(hasWebAuthn && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable){
+    try{ platformAuth = (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) ? '✅ Détecté' : '❌ Aucun capteur détecté par le système'; }
+    catch(e){ platformAuth = 'Erreur : ' + e.message; }
+  }
+  const rows = [
+    ['URL actuelle', location.href],
+    ['Protocole', proto + (proto==='https:'?' ✅':' ❌ (doit être https:)')],
+    ['Contexte sécurisé', secure ? '✅ Oui' : '❌ Non — BLOQUE caméra et empreinte'],
+    ['API Caméra présente', hasCam ? '✅ Oui' : '❌ Non (navigateur incompatible)'],
+    ['API WebAuthn présente', hasWebAuthn ? '✅ Oui' : '❌ Non (navigateur incompatible)'],
+    ['Capteur biométrique système', platformAuth],
+    ['Navigateur (user agent)', navigator.userAgent.slice(0,60) + '…']
+  ];
+  document.getElementById(targetId).innerHTML = rows.map(r=>
+    '<div><b style="color:var(--ink-soft)">'+r[0]+' :</b> '+r[1]+'</div>'
+  ).join('');
+}
+document.addEventListener('DOMContentLoaded', function(){
+  runDiagnostics('diagResultFace');
+  runDiagnostics('diagResultFinger');
+  initFingerprintUI();
+});
+
+/* ---------- SCAN FACIAL (caméra réelle, avant/arrière) ---------- */
+let camStream = null;
+let camFacing = 'user'; // 'user' = avant (visage), 'environment' = arrière
+async function startCamera(){
+  const video = document.getElementById('camVideo');
+  const badge = document.getElementById('faceBadge');
+  if(!window.isSecureContext){
+    toast('Bloqué : la page doit être en https:// (ou localhost). Actuellement : ' + location.protocol, 6000);
+    badge.textContent='HTTPS REQUIS'; badge.className='sim-badge';
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast('Ce navigateur ne supporte pas l\'accès caméra (API absente)', 5000);
+    badge.textContent='NON SUPPORTÉ'; badge.className='sim-badge';
+    return;
+  }
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); }
+  try{
+    camStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing}});
+    video.style.display='block';
+    document.getElementById('camSnapshot').style.display='none';
+    video.srcObject = camStream;
+    badge.textContent = 'CAMÉRA ACTIVE (' + (camFacing==='user'?'avant':'arrière') + ')'; badge.className='sim-badge on';
+    toast('Caméra activée');
+  }catch(err){
+    badge.textContent = 'REFUSÉE'; badge.className='sim-badge';
+    toast('Accès caméra refusé/impossible : ' + err.name + ' — ' + err.message, 6000);
+  }
+}
+function switchCamera(){
+  camFacing = camFacing === 'user' ? 'environment' : 'user';
+  toast('Bascule vers la caméra ' + (camFacing==='user'?'avant':'arrière') + '…');
+  startCamera();
+}
+async function captureFace(){
+  const video = document.getElementById('camVideo');
+  const canvas = document.getElementById('camCanvas');
+  const img = document.getElementById('camSnapshot');
+  const resultBox = document.getElementById('faceResult');
+  if(!camStream){ toast('Active d\'abord la caméra'); return; }
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/png');
+  img.src = dataUrl; img.style.display='block'; video.style.display='none';
+
+  let faceDetected = null;
+  if('FaceDetector' in window){
+    try{
+      const fd = new FaceDetector();
+      const faces = await fd.detect(canvas);
+      faceDetected = faces.length > 0;
+    }catch(e){ faceDetected = null; }
+  }
+  resultBox.className = 'scan-result ' + (faceDetected===false ? 'invalid' : 'valid');
+  resultBox.innerHTML = faceDetected===true
+    ? '<div class="sr-label">✅ Visage détecté</div><div class="sr-meta">Photo capturée en direct par la caméra.</div>'
+    : faceDetected===false
+    ? '<div class="sr-label">⚠️ Aucun visage détecté</div><div class="sr-meta">Repositionne-toi face à la caméra et réessaie.</div>'
+    : '<div class="sr-label">📸 Photo capturée</div><div class="sr-meta">Détection de visage non supportée par ce navigateur — capture réelle effectuée sans vérification automatique.</div>';
+  toast('Capture faciale effectuée');
+}
+
+/* ---------- EMPREINTE (WebAuthn réel, persistant) ---------- */
+let fpCredentialId = localStorage.getItem('ss_fp_credential_id') || null;
+function rnd(len){ const a=new Uint8Array(len); crypto.getRandomValues(a); return a; }
+function initFingerprintUI(){
+  if(fpCredentialId){
+    document.getElementById('fpIcon').textContent = '✅';
+    document.getElementById('fpLabel').textContent = 'Empreinte déjà enregistrée sur cet appareil';
+    document.getElementById('fpBadge').textContent = 'ENREGISTRÉE';
+    document.getElementById('fpBadge').className = 'sim-badge on';
+  }
+}
+async function enrollFingerprint(){
+  const icon = document.getElementById('fpIcon');
+  const label = document.getElementById('fpLabel');
+  const badge = document.getElementById('fpBadge');
+  if(!window.isSecureContext){
+    toast('Bloqué : la page doit être en https:// (ou localhost). Actuellement : ' + location.protocol, 6000);
+    return;
+  }
+  if(!window.PublicKeyCredential){ toast('WebAuthn non supporté sur ce navigateur', 4500); return; }
+  try{
+    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    if(!available){ toast('Aucun capteur biométrique détecté par le système sur cet appareil', 5000); return; }
+  }catch(e){ /* on tente quand même */ }
+  icon.classList.add('scanning'); label.textContent='Suivre les instructions du capteur…';
+  try{
+    const cred = await navigator.credentials.create({
+      publicKey:{
+        challenge: rnd(32),
+        rp:{ name:'SafeStade Pro' },
+        user:{ id: rnd(16), name:'agent@safestade', displayName:'Agent SafeStade' },
+        pubKeyCredParams:[{type:'public-key', alg:-7},{type:'public-key', alg:-257}],
+        authenticatorSelection:{ authenticatorAttachment:'platform', userVerification:'required' },
+        timeout:60000
+      }
+    });
+    fpCredentialId = cred.id;
+    localStorage.setItem('ss_fp_credential_id', fpCredentialId); // persiste entre les rechargements
+    icon.classList.remove('scanning'); icon.textContent='✅';
+    label.textContent='Empreinte enregistrée sur cet appareil';
+    badge.textContent='ENREGISTRÉE'; badge.className='sim-badge on';
+    document.getElementById('dashFpStatus').textContent = 'Empreinte enregistrée';
+    toast('Empreinte réelle enregistrée via le capteur de l\'appareil');
+    logAudit('Empreinte enregistrée (WebAuthn)');
+  }catch(err){
+    icon.classList.remove('scanning'); icon.textContent='🔒';
+    label.textContent='Toucher pour enregistrer une empreinte';
+    toast('Échec de l\'enregistrement : ' + err.message, 4500);
+  }
+}
+async function verifyFingerprint(){
+  const resultBox = document.getElementById('fpResult');
+  if(!fpCredentialId){ toast('Enregistre d\'abord une empreinte'); return; }
+  try{
+    await navigator.credentials.get({
+      publicKey:{
+        challenge: rnd(32),
+        allowCredentials:[{ id: Uint8Array.from(atob(fpCredentialId.replace(/-/g,'+').replace(/_/g,'/')), c=>c.charCodeAt(0)), type:'public-key' }],
+        userVerification:'required',
+        timeout:60000
+      }
+    });
+    resultBox.className='scan-result valid';
+    resultBox.innerHTML='<div class="sr-label">✅ Empreinte vérifiée</div><div class="sr-meta">Authentification confirmée par le capteur biométrique réel de l\'appareil.</div>';
+    toast('Empreinte vérifiée avec succès');
+  }catch(err){
+    resultBox.className='scan-result invalid';
+    resultBox.innerHTML='<div class="sr-label">❌ Échec de vérification</div><div class="sr-meta">'+err.message+'</div>';
+    toast('Échec de vérification : ' + err.message, 4500);
+  }
+}
+
+/* ---------- PRESSE : WhatsApp + Email réels ---------- */
+function sendWhatsApp(){
+  const num = document.getElementById('waNumber').value.replace(/[^0-9]/g,'');
+  const msg = document.getElementById('waMessage').value;
+  if(!num){ toast('Renseigne un numéro WhatsApp'); return; }
+  const url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+  toast('Ouverture de WhatsApp…');
+  logAudit('WhatsApp ouvert vers ' + num);
+  syncToAbaFusion('whatsapp_sent', { number: num, message: msg });
+}
+function sendEmail(){
+  const to = document.getElementById('mailTo').value.trim();
+  const subject = document.getElementById('mailSubject').value;
+  const body = document.getElementById('mailBody').value;
+  if(!to){ toast('Renseigne un destinataire'); return; }
+  const url = 'mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+  window.location.href = url;
+  toast('Ouverture de ton client mail…');
+  logAudit('Email préparé vers ' + to);
+  syncToAbaFusion('email_sent', { to, subject, body });
+}
+
+/* ---------- AUDIT (journal réel des actions, persisté) ---------- */
+function loadAudit(){ try{ return JSON.parse(localStorage.getItem('ss_audit')||'[]'); }catch(e){ return []; } }
+function logAudit(action, warn){
+  const list = loadAudit();
+  list.unshift({ action, time: new Date().toLocaleString('fr-FR'), warn: !!warn });
+  localStorage.setItem('ss_audit', JSON.stringify(list.slice(0,50)));
+  renderAudit();
+}
+function clearAudit(){ localStorage.setItem('ss_audit','[]'); renderAudit(); toast('Journal vidé'); }
+function renderAudit(){
+  const box = document.getElementById('auditList');
+  if(!box) return;
+  const list = loadAudit();
+  box.innerHTML = list.length ? list.map(a=>
+    '<div class="audit-item'+(a.warn?' warn':'')+'"><div class="ai-dot"></div><div class="ai-text"><div class="ai-action">'+a.action+'</div><div class="ai-time">'+a.time+'</div></div></div>'
+  ).join('') : '<div class="empty-note">Aucune action enregistrée pour l\'instant — utilise les Outils pour générer de l\'activité réelle.</div>';
+  const socEsp = document.getElementById('socEspStatus'); if(socEsp) socEsp.textContent = document.getElementById('dashEspStatus').textContent;
+  const socLed = document.getElementById('socEspLed'); if(socLed) socLed.className = document.getElementById('espLed').className;
+  const socWh = document.getElementById('socWebhookStatus'); if(socWh) socWh.textContent = document.getElementById('dashWebhookStatus').textContent;
+}
+
+/* ---------- SECURITE (toggles réels, persistés) ---------- */
+const securityItems = [
+  {id:'firewall', label:'Pare-feu périmétrique', meta:'Filtrage du trafic entrant/sortant'},
+  {id:'updates', label:'Mises à jour système appliquées', meta:'OS, firmware, correctifs de sécurité'},
+  {id:'backup', label:'Sauvegardes testées', meta:'Restauration vérifiée récemment'},
+  {id:'cam', label:'Caméras de surveillance opérationnelles', meta:'Couverture des zones sensibles'},
+  {id:'access', label:'Contrôle d\'accès badges à jour', meta:'Liste des accès révoqués/actifs'},
+  {id:'incident', label:'Plan de réponse aux incidents testé', meta:'Exercice réalisé ce trimestre'}
+];
+function loadSecState(){ try{ return JSON.parse(localStorage.getItem('ss_security')||'{}'); }catch(e){ return {}; } }
+function toggleSecItem(id){
+  const state = loadSecState();
+  state[id] = !state[id];
+  localStorage.setItem('ss_security', JSON.stringify(state));
+  logAudit((state[id]?'Activé : ':'Désactivé : ') + securityItems.find(s=>s.id===id).label, !state[id]);
+  renderSecurity();
+}
+function renderSecurity(){
+  const box = document.getElementById('secList');
+  if(!box) return;
+  const state = loadSecState();
+  box.innerHTML = securityItems.map(item=>{
+    const on = !!state[item.id];
+    return '<div class="toggle-row"><div class="tr-text"><div class="tr-title">'+item.label+'</div><div class="tr-meta">'+item.meta+'</div></div>'
+      + '<div class="toggle-switch'+(on?' on':'')+'" onclick="toggleSecItem(\''+item.id+'\')"></div></div>';
+  }).join('');
+  const activeCount = securityItems.filter(i=>state[i.id]).length;
+  document.getElementById('secScoreTag').textContent = activeCount + '/' + securityItems.length + ' actifs';
+}
+
+/* ---------- TICKETS (CRUD réel, persisté) ---------- */
+let ticketFilter = 'all';
+function loadTickets(){ try{ return JSON.parse(localStorage.getItem('ss_tickets')||'[]'); }catch(e){ return []; } }
+function saveTickets(list){ localStorage.setItem('ss_tickets', JSON.stringify(list)); }
+function toggleTicketForm(){ document.getElementById('ticketForm').classList.toggle('open'); }
+function createTicket(){
+  const title = document.getElementById('tkTitle').value.trim();
+  const cat = document.getElementById('tkCat').value;
+  const priority = document.getElementById('tkPriority').value;
+  const desc = document.getElementById('tkDesc').value.trim();
+  if(!title){ toast('Renseigne un titre'); return; }
+  const list = loadTickets();
+  const id = 'TK-' + String(list.length+1).padStart(4,'0');
+  const ticket = { id, title, cat, priority, desc, status:'open', created:new Date().toLocaleString('fr-FR') };
+  list.unshift(ticket);
+  saveTickets(list);
+  document.getElementById('tkTitle').value=''; document.getElementById('tkDesc').value='';
+  toggleTicketForm();
+  renderTickets();
+  logAudit('Ticket créé : ' + title, priority==='crit');
+  toast('Ticket ' + id + ' créé');
+  syncToAbaFusion('ticket_created', ticket);
+}
+function resolveTicket(id){
+  const list = loadTickets();
+  const t = list.find(x=>x.id===id);
+  if(t){ t.status='done'; saveTickets(list); renderTickets(); logAudit('Ticket résolu : ' + t.title); toast('Ticket ' + id + ' résolu'); }
+}
+function filterTickets(cat, el){
+  ticketFilter = cat;
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.toggle('active', c===el));
+  renderTickets();
+}
+function renderTickets(){
+  const box = document.getElementById('ticketList');
+  const empty = document.getElementById('ticketEmpty');
+  if(!box) return;
+  let list = loadTickets();
+  if(ticketFilter!=='all') list = list.filter(t=>t.cat===ticketFilter);
+  empty.style.display = list.length ? 'none' : 'block';
+  box.innerHTML = list.map(t=>
+    '<div class="ticket-card"><div class="tc-top"><div><div class="tc-id">'+t.id+' · '+t.created+'</div><div class="tc-title">'+t.title+'</div></div></div>'
+    + '<div class="tc-meta"><span class="pill cat">'+t.cat+'</span><span class="pill '+t.priority+'">'+({crit:'Critique',med:'Moyenne',low:'Faible'}[t.priority])+'</span>'
+    + '<span class="pill '+(t.status==='done'?'status-done':'status-open')+'">'+(t.status==='done'?'Résolu':'Ouvert')+'</span>'
+    + (t.status==='open' ? '<button class="tc-resolve" onclick="resolveTicket(\''+t.id+'\')">Résoudre</button>' : '')
+    + '</div></div>'
+  ).join('');
+  const alerts = loadTickets().filter(t=>t.status==='open' && t.priority==='crit').length;
+  const dashAlerts = document.getElementById('dashAlerts'); if(dashAlerts) dashAlerts.textContent = alerts;
+}
+
+/* ---------- SCAN TICKET (caméra réelle + BarcodeDetector) ---------- */
+let tkStream = null, tkScanTimer = null;
+const validTicketCodes = ['SAFE-0001','SAFE-0002','SAFE-0003'];
+function loadUsedTickets(){ try{ return JSON.parse(localStorage.getItem('ss_used_tickets')||'[]'); }catch(e){ return []; } }
+async function startTicketScan(){
+  const video = document.getElementById('tkVideo');
+  const badge = document.getElementById('scanTicketBadge');
+  try{
+    tkStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    video.srcObject = tkStream;
+    badge.textContent = 'SCAN ACTIF'; badge.className='sim-badge on';
+    if('BarcodeDetector' in window){
+      const detector = new BarcodeDetector();
+      const canvas = document.getElementById('tkCanvas');
+      tkScanTimer = setInterval(async ()=>{
+        if(!video.videoWidth) return;
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video,0,0);
+        try{
+          const codes = await detector.detect(canvas);
+          if(codes.length){ checkTicketCode(codes[0].rawValue); }
+        }catch(e){}
+      }, 700);
+    } else {
+      toast('Lecture QR native non supportée par ce navigateur — utilise la saisie manuelle ci-dessous.', 5000);
+    }
+  }catch(err){
+    badge.textContent='REFUSÉE'; badge.className='sim-badge';
+    toast('Accès caméra refusé/impossible : ' + err.message, 5000);
+  }
+}
+function stopTicketScan(){
+  if(tkScanTimer){ clearInterval(tkScanTimer); tkScanTimer=null; }
+  if(tkStream){ tkStream.getTracks().forEach(t=>t.stop()); tkStream=null; }
+  document.getElementById('scanTicketBadge').textContent='INACTIF';
+  document.getElementById('scanTicketBadge').className='sim-badge pending';
+}
+function checkTicketCode(code){
+  code = (code||'').trim();
+  if(!code) return;
+  const resultBox = document.getElementById('ticketScanResult');
+  const used = loadUsedTickets();
+  if(!validTicketCodes.includes(code)){
+    resultBox.className='scan-result invalid';
+    resultBox.innerHTML='<div class="sr-label">❌ Code invalide</div><div class="sr-meta">'+code+' n\'existe pas dans la liste des billets valides.</div>';
+    logAudit('Ticket invalide scanné : ' + code, true);
+    syncToAbaFusion('ticket_scan_invalid', { code });
+  } else if(used.includes(code)){
+    resultBox.className='scan-result invalid';
+    resultBox.innerHTML='<div class="sr-label">⚠️ Déjà utilisé</div><div class="sr-meta">Le billet '+code+' a déjà été scanné.</div>';
+    logAudit('Ticket déjà utilisé rescanné : ' + code, true);
+    syncToAbaFusion('ticket_scan_reused', { code });
+  } else {
+    used.push(code);
+    localStorage.setItem('ss_used_tickets', JSON.stringify(used));
+    resultBox.className='scan-result valid';
+    resultBox.innerHTML='<div class="sr-label">✅ Billet valide</div><div class="sr-meta">'+code+' validé et marqué comme utilisé.</div>';
+    logAudit('Ticket validé : ' + code);
+    toast('Billet ' + code + ' validé');
+    syncToAbaFusion('ticket_scan_valid', { code });
+  }
+}
+
+/* ---------- Initialisation au chargement ---------- */
+document.addEventListener('DOMContentLoaded', function(){
+  renderSecurity();
+  renderTickets();
+  renderAudit();
+});
+
+/* ---------- Synchronisation générique vers AbaFusion (ESP32/USB en priorité) ---------- */
+async function syncToAbaFusion(eventType, data){
+  // L'ESP32 n'a aucun Wi-Fi : c'est toujours le téléphone (sa propre connexion
+  // internet) qui envoie réellement à AbaFusion, via le webhook/proxy ci-dessous.
+  const payload = { event: eventType, source: 'safestade-pro', data, timestamp: new Date().toISOString() };
+  const url = document.getElementById('abaUrl') ? document.getElementById('abaUrl').value.trim() : '';
+  const proxyUrl = document.getElementById('abaProxyUrl') ? document.getElementById('abaProxyUrl').value.trim() : '';
+  if(!url) return;
+  try{
+    const target = proxyUrl ? (proxyUrl + encodeURIComponent(url)) : url;
+    const res = await fetch(target, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    logAudit('Synchronisé vers AbaFusion (webhook' + (proxyUrl?'+proxy':'') + ') : ' + eventType + ' — HTTP ' + res.status);
+  }catch(err){
+    logAudit('Échec sync AbaFusion (' + eventType + ') : ' + err.message, true);
+  }
+}
+
+/* ---------- HACHAGE & CHIFFREMENT (Web Crypto réel) ---------- */
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function b64(bytes){ return btoa(String.fromCharCode(...new Uint8Array(bytes))); }
+function unb64(str){ return Uint8Array.from(atob(str), c=>c.charCodeAt(0)); }
+async function deriveAesKey(password, salt){
+  const keyMaterial = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations:150000, hash:'SHA-256' },
+    keyMaterial, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+async function encryptAES(text, password){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveAesKey(password, salt);
+  const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, new TextEncoder().encode(text));
+  return b64(salt) + '.' + b64(iv) + '.' + b64(ciphertext);
+}
+async function decryptAES(packed, password){
+  const [saltB64, ivB64, dataB64] = packed.split('.');
+  const salt = unb64(saltB64), iv = unb64(ivB64), data = unb64(dataB64);
+  const key = await deriveAesKey(password, salt);
+  const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, data);
+  return new TextDecoder().decode(plain);
+}
+async function generateDocHash(){
+  const text = document.getElementById('cryptoText').value;
+  if(!text.trim()){ toast('Colle le texte du rapport/contrat à traiter'); return; }
+  const hash = await sha256Hex(text);
+  document.getElementById('cryptoHashResult').textContent = hash;
+  document.getElementById('cryptoHashBox').style.display = 'block';
+  logAudit('Hash SHA-256 généré pour un document (' + text.length + ' caractères)');
+  syncToAbaFusion('document_hashed', { hash, length: text.length });
+}
+async function encryptDoc(){
+  const text = document.getElementById('cryptoText').value;
+  const pass = document.getElementById('cryptoPassword').value;
+  if(!text.trim() || !pass){ toast('Renseigne le texte et un mot de passe'); return; }
+  try{
+    const packed = await encryptAES(text, pass);
+    document.getElementById('cryptoCipherResult').value = packed;
+    document.getElementById('cryptoCipherBox').style.display = 'block';
+    logAudit('Document chiffré (AES-256-GCM)');
+    toast('Document chiffré');
+    syncToAbaFusion('document_encrypted', { encrypted: packed });
+  }catch(err){ toast('Échec du chiffrement : ' + err.message, 4500); }
+}
+async function decryptDoc(){
+  const packed = document.getElementById('cryptoCipherResult').value;
+  const pass = document.getElementById('cryptoPassword').value;
+  if(!packed || !pass){ toast('Colle le texte chiffré et le mot de passe'); return; }
+  try{
+    const plain = await decryptAES(packed, pass);
+    document.getElementById('cryptoText').value = plain;
+    toast('Document déchiffré avec succès');
+    logAudit('Document déchiffré (AES-256-GCM)');
+  }catch(err){ toast('Échec du déchiffrement — mot de passe incorrect ou données corrompues', 5000); }
+}
+async function sendSecuredDocToAbaFusion(){
+  const hash = document.getElementById('cryptoHashResult').textContent;
+  const cipher = document.getElementById('cryptoCipherResult').value;
+  if(!hash && !cipher){ toast('Génère au moins un hash ou un chiffrement avant d\'envoyer'); return; }
+  await syncToAbaFusion('document_secured', { hash: hash || null, encrypted: cipher || null });
+  toast('Hash/chiffré envoyé à AbaFusion (jamais le texte en clair)');
+}
+
+const MAX_MSG_LEN = 1500; // limite pratique pour WhatsApp/mailto
+function sendViaWhatsAppAndMail(label, content, eventLog){
+  const num = document.getElementById('cryptoWaNumber').value.replace(/[^0-9]/g,'');
+  const mail = document.getElementById('cryptoMailTo').value.trim();
+  let body = content;
+  let truncated = false;
+  if(body.length > MAX_MSG_LEN){ body = body.slice(0, MAX_MSG_LEN) + '\n\n[...texte tronqué — version complète envoyée à AbaFusion]'; truncated = true; }
+  if(num){
+    window.open('https://wa.me/'+num+'?text='+encodeURIComponent(label+' :\n'+body), '_blank');
+    logAudit(eventLog + ' envoyé via WhatsApp' + (truncated?' (tronqué)':''));
+  } else {
+    toast('Renseigne un numéro WhatsApp pour cet envoi', 3000);
+  }
+  if(mail){
+    window.location.href = 'mailto:'+encodeURIComponent(mail)+'?subject='+encodeURIComponent(label)+'&body='+encodeURIComponent(body);
+    logAudit(eventLog + ' envoyé via email' + (truncated?' (tronqué)':''));
+  } else {
+    toast('Renseigne un email pour cet envoi', 3000);
+  }
+}
+async function sendHashEverywhere(){
+  const hash = document.getElementById('cryptoHashResult').textContent;
+  if(!hash){ toast('Génère d\'abord le hash'); return; }
+  await syncToAbaFusion('document_hashed', { hash });
+  sendViaWhatsAppAndMail('Hash SHA-256 du document', hash, 'Hash');
+  toast('Hash envoyé — AbaFusion (ESP32) + WhatsApp + Email');
+}
+async function sendCipherEverywhere(){
+  const cipher = document.getElementById('cryptoCipherResult').value;
+  if(!cipher){ toast('Chiffre d\'abord le document'); return; }
+  await syncToAbaFusion('document_encrypted', { encrypted: cipher });
+  sendViaWhatsAppAndMail('Document chiffré (AES-256)', cipher, 'Chiffré');
+  toast('Chiffré envoyé — AbaFusion (ESP32, intégral) + WhatsApp + Email');
+}
+
+/* ---------- OUTILS sub-nav ---------- */
+function showOutil(name){
+  document.querySelectorAll('.outil-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('outil-'+name).classList.add('active');
+  document.querySelectorAll('.outil-nav button').forEach(b=>b.classList.toggle('active', b.dataset.outil===name));
+}
+</script>
+</body>
+</html>
